@@ -1,11 +1,10 @@
 package com.frank.apiavisutilisateurs.controller;
 
-import com.frank.apiavisutilisateurs.configuration.JwtService;
+import com.frank.apiavisutilisateurs.securite.JwtService;
 import com.frank.apiavisutilisateurs.dto.AuthentificationDTO;
 import com.frank.apiavisutilisateurs.entity.Utilisateur;
 import com.frank.apiavisutilisateurs.service.UtilisateurService;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
