@@ -1,4 +1,4 @@
-package com.frank.apiavisutilisateurs.securite;
+package com.frank.apiavisutilisateurs.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -22,7 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class ConfigurationSecurity {
 
-    private final JwtFilter jwtFilter;
+    private final JwtAuthorizationFilter jwtAuthorizationFilter;
 
 
     @Bean
@@ -31,15 +30,16 @@ public class ConfigurationSecurity {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/utilisateurs/inscription", "/utilisateurs/activation", "/utilisateurs/connexion")
-                                .permitAll() // accessible sans être connecté
-                                .anyRequest().authenticated()) // tout le reste nécessite d'être connecté
+                        auth.requestMatchers("/utilisateurs/inscription",
+                                        "/utilisateurs/activation",
+                                        "/utilisateurs/connexion",
+                                        "/utilisateurs/refresh-token").permitAll()
+                                .anyRequest().authenticated())
                 .sessionManagement(httpSecuritySessionManagementConfigurer ->
                         httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
-
 
 
     @Bean
@@ -47,7 +47,7 @@ public class ConfigurationSecurity {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-
+    //Ce bean n'est pas obligatoire pour que l'authentification marche car spring peut le généré tout seul
     @Bean
     public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();

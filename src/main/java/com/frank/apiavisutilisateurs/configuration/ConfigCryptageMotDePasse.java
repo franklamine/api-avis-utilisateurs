@@ -1,4 +1,4 @@
-package com.frank.apiavisutilisateurs.securite;
+package com.frank.apiavisutilisateurs.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

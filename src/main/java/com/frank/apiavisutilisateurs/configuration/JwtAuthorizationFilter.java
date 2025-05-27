@@ -1,4 +1,4 @@
-package com.frank.apiavisutilisateurs.securite;
+package com.frank.apiavisutilisateurs.configuration;
 
 import com.frank.apiavisutilisateurs.service.UtilisateurService;
 import jakarta.servlet.FilterChain;
@@ -16,20 +16,21 @@ import java.io.IOException;
 
 @AllArgsConstructor
 @Service
-public class JwtFilter extends OncePerRequestFilter {
+public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private UtilisateurService utilisateurService;
-    private JwtService jwtService;
+    private JWTUtils jwtService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = null;
         String username = null;
         boolean isTokenExpired = true;
-        final String authorization = request.getHeader("Authorization");
+        final String authorizationToken = request.getHeader("Authorization");
+        System.out.println(authorizationToken);
 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            token = authorization.substring(7);
+        if (authorizationToken != null && authorizationToken.startsWith("Bearer ")) {
+            token = authorizationToken.substring(7);
             isTokenExpired = jwtService.isTokenExpired(token);
             username = jwtService.extractUsername(token);
         }

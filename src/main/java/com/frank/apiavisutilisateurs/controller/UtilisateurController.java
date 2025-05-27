@@ -1,8 +1,10 @@
 package com.frank.apiavisutilisateurs.controller;
 
-import com.frank.apiavisutilisateurs.securite.JwtService;
+import com.frank.apiavisutilisateurs.configuration.JWTUtils;
 import com.frank.apiavisutilisateurs.dto.AuthentificationDTO;
+import com.frank.apiavisutilisateurs.entity.Token;
 import com.frank.apiavisutilisateurs.entity.Utilisateur;
+import com.frank.apiavisutilisateurs.service.TokenService;
 import com.frank.apiavisutilisateurs.service.UtilisateurService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +26,8 @@ public class UtilisateurController {
 
     private UtilisateurService utilisateurService;
     private AuthenticationManager authenticationManager;
-    private JwtService jwtService;
+    private JWTUtils jwtUtils;
+    private TokenService tokenService;
 
 
     @PostMapping(path = "inscription")
@@ -39,16 +42,22 @@ public class UtilisateurController {
     }
 
     @PostMapping(path = "connexion")
-    public  Map<String, String> connexion(@RequestBody AuthentificationDTO authentificationDTO) {
+    public  Token connexion(@RequestBody AuthentificationDTO authentificationDTO) {
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authentificationDTO.username(), authentificationDTO.password()));
-            Map<String, String> token=null;
+            Token token=null;
             if (authentication.isAuthenticated()) {
-                token = jwtService.generateToken(authentificationDTO.username());
+
+                token = jwtUtils.generateToken(authentificationDTO.username());
             }
             return token;
         } catch (Exception e) {
             throw new RuntimeException("❌ Connexion échouée : " + e.getMessage());
         }
+    }
+
+    @PostMapping("refresh-token")
+    public Token refreshToken(@RequestBody Map<String, String> refresh) {
+        return tokenService.refreshToken(refresh);
     }
 }
