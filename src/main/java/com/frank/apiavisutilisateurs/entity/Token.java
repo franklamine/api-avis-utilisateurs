@@ -16,13 +16,10 @@ public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String bearer;
-    private boolean disable = false;
+    private String refreshToken;
+    private String AccessToken;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    private RefreshToken refreshToken;
-
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Utilisateur utilisateur;
 
 }

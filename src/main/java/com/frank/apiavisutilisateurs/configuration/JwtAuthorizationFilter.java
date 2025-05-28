@@ -1,6 +1,7 @@
 package com.frank.apiavisutilisateurs.configuration;
 
-import com.frank.apiavisutilisateurs.service.UtilisateurService;
+import com.frank.apiavisutilisateurs.service.CustomUserDetailsService;
+import com.frank.apiavisutilisateurs.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,8 +19,8 @@ import java.io.IOException;
 @Service
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
-    private UtilisateurService utilisateurService;
-    private JWTUtils jwtService;
+    private CustomUserDetailsService customUserDetailsService;
+    private TokenService jwtService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -36,7 +37,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
 
         if(!isTokenExpired && username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-         UserDetails userDetails = utilisateurService.loadUserByUsername(username);
+         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
