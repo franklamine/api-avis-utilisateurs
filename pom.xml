@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.frank</groupId>
-    <artifactId>api-avis-utilisateurs</artifactId>
+    <artifactId>api-social-network</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>api-avis-utilisateurs</name>
-    <description>api-avis-utilisateurs</description>
+    <name>api-social-network</name>
+    <description>api-social-network</description>
     <url/>
     <licenses>
         <license/>

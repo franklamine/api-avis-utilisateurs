@@ -1,0 +1,104 @@
+package com.frank.apisocialnetwork.service;
+
+import com.frank.apisocialnetwork.dto.AuthentificationDTO;
+import com.frank.apisocialnetwork.entity.Role;
+import com.frank.apisocialnetwork.entity.Token;
+import com.frank.apisocialnetwork.entity.Utilisateur;
+import com.frank.apisocialnetwork.entity.Validation;
+import com.frank.apisocialnetwork.enumerateur.TypeRole;
+import com.frank.apisocialnetwork.exception.ApiSocialNetworkException;
+import com.frank.apisocialnetwork.repository.TokenRepository;
+import com.frank.apisocialnetwork.repository.UtilisteurRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+@Transactional
+@AllArgsConstructor
+@Service
+public class UtilisateurService {
+
+    private UtilisteurRepository utilisateurRepository;
+    private PasswordEncoder passwordEncoder;
+    private ValidationService validationService;
+    private AuthenticationManager authenticationManager;
+    private TokenService tokenService;
+    private TokenRepository tokenRepository;
+    private CustomUserDetailsService customUserDetailsService;
+
+
+    public ResponseEntity<String> inscription(Utilisateur utilisateur) {
+        Optional<Utilisateur> utilisateurOptional = utilisateurRepository.findByEmail(utilisateur.getEmail());
+        if (utilisateurOptional.isPresent()) {
+            throw new ApiSocialNetworkException("Cet utilisateur existe déjà", HttpStatus.CONFLICT);
+        }
+        utilisateur.setMotDePasse(passwordEncoder.encode(utilisateur.getMotDePasse()));
+        utilisateur.setMotDePasseConfirmation(passwordEncoder.encode(utilisateur.getMotDePasseConfirmation()));
+        utilisateur.setRole(new Role());
+        utilisateur.getRole().setTypeRole(TypeRole.UTILISATEUR);
+        utilisateur = utilisateurRepository.save(utilisateur);
+
+        validationService.enregistrerValidation(utilisateur);
+        return new ResponseEntity<>("Utilisateur inscrit avec succès", HttpStatus.CREATED);
+    }
+
+    public ResponseEntity<String> activation(Map<String, String> activation) {
+        Validation validation = validationService.getValidationByCode(activation.get("code"));
+        if (Instant.now().isAfter(validation.getExpiration())) {
+            throw new ApiSocialNetworkException("Le code d'activation a expiré. Veuillez en demander un nouveau.", HttpStatus.GONE);
+        }
+        Optional<Utilisateur> utilisateurAActiver = utilisateurRepository.findById(validation.getUtilisateur().getId());
+        if (utilisateurAActiver.isEmpty()) {
+            throw new ApiSocialNetworkException("Utilisateur n'existe pas", HttpStatus.NOT_FOUND); //pas util ici pour l'utilisateur
+        }
+        utilisateurAActiver.get().setActif(true);
+        utilisateurRepository.save(utilisateurAActiver.get());
+        return new ResponseEntity<>("cher " + utilisateurAActiver.get().getPrenom() + " votre compte a été activé .", HttpStatus.OK);
+    }
+
+    public ResponseEntity<Map<String, String>> connexion(AuthentificationDTO authentificationDTO, HttpServletResponse response) {
+        Map<String, String> tokens = new HashMap<>();
+        try {
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authentificationDTO.email(), authentificationDTO.motDePasse()));
+            if (authentication.isAuthenticated()) {
+                String accessToken = tokenService.generateToken(authentificationDTO.email(), true);
+                String refreshToken = tokenService.generateToken(authentificationDTO.email(), false);
+                tokens.put("accessToken", accessToken);
+                tokens.put("refreshToken", refreshToken);
+                tokens.put("message", "Vous etes connecté !");
+                Token tokenObj = new Token();
+                tokenObj.setAccessToken(accessToken);
+                tokenObj.setRefreshToken(refreshToken);
+                tokenObj.setUtilisateur((Utilisateur) customUserDetailsService.loadUserByUsername(authentificationDTO.email()));
+                tokenRepository.save(tokenObj);
+            }
+            return new ResponseEntity<>(tokens, HttpStatus.OK);
+        } catch (BadCredentialsException e) {
+            throw new ApiSocialNetworkException("Email ou mot de passe invalide", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            throw new ApiSocialNetworkException("Erreur lors de l'authentification", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<String> deconnexion(Map<String, String> refreshToken) {
+        Token token = tokenRepository.findByRefreshToken(refreshToken.get("token"));
+        if (token != null) {
+            tokenRepository.delete(token);
+//            throw new ApiSocialNetworkException("Token non trouve",HttpStatus.MULTI_STATUS);
+        }
+        return new ResponseEntity<>( "Déconnexion réussie", HttpStatus.OK);
+    }
+}
