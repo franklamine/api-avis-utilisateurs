@@ -24,8 +24,7 @@ public class Validation {
     private Instant activation;
     private String code;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH})
     private Utilisateur utilisateur;
-
 
 }

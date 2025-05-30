@@ -29,8 +29,8 @@ public class UtilisateurController {
     }
 
     @PostMapping(path = "activation")
-    public ResponseEntity<String> activation(@RequestBody Map<String, String> activation) {
-        return utilisateurService.activation(activation);
+    public ResponseEntity<String> activation(@RequestBody Map<String, String> codeActivation) {
+        return utilisateurService.activation(codeActivation);
     }
 
     @PostMapping(path = "connexion")
@@ -46,5 +46,15 @@ public class UtilisateurController {
     @PostMapping("deconnexion")
     public ResponseEntity<String> deconnexion(@RequestBody Map<String, String> refreshToken) {
         return utilisateurService.deconnexion(refreshToken);
+    }
+
+    @PostMapping("mot-de-passe-oublier")
+    public ResponseEntity<String> modifierMotDePasse(@RequestBody Map<String, String> username) {
+        return utilisateurService.modifierMotDePasse(username);
+    }
+
+    @PostMapping("nouveau-mot-de-passe")
+    public ResponseEntity<String> nouveauMotDePasse(@RequestBody Map<String, String> parametres) {
+        return utilisateurService.nouveauMotDePasse(parametres);
     }
 }

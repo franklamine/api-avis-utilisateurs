@@ -9,6 +9,7 @@ import com.frank.apisocialnetwork.enumerateur.TypeRole;
 import com.frank.apisocialnetwork.exception.ApiSocialNetworkException;
 import com.frank.apisocialnetwork.repository.TokenRepository;
 import com.frank.apisocialnetwork.repository.UtilisteurRepository;
+import com.frank.apisocialnetwork.repository.ValidationRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ public class UtilisateurService {
     private UtilisteurRepository utilisateurRepository;
     private PasswordEncoder passwordEncoder;
     private ValidationService validationService;
+    private ValidationRepository validationRepository;
     private AuthenticationManager authenticationManager;
     private TokenService tokenService;
     private TokenRepository tokenRepository;
@@ -51,12 +53,12 @@ public class UtilisateurService {
         utilisateur.getRole().setTypeRole(TypeRole.UTILISATEUR);
         utilisateur = utilisateurRepository.save(utilisateur);
 
-        validationService.enregistrerValidation(utilisateur);
-        return new ResponseEntity<>("Utilisateur inscrit avec succès", HttpStatus.CREATED);
+        validationService.enregistrerValidationEtNotifier(utilisateur);
+        return new ResponseEntity<>("Inscription reussie. Utiliser le code de vérification recu par mail pour activer votre compte", HttpStatus.CREATED);
     }
 
-    public ResponseEntity<String> activation(Map<String, String> activation) {
-        Validation validation = validationService.getValidationByCode(activation.get("code"));
+    public ResponseEntity<String> activation(Map<String, String> codeActivation) {
+        Validation validation = validationService.getValidationByCode(codeActivation.get("code"));
         if (Instant.now().isAfter(validation.getExpiration())) {
             throw new ApiSocialNetworkException("Le code d'activation a expiré. Veuillez en demander un nouveau.", HttpStatus.GONE);
         }
@@ -66,6 +68,7 @@ public class UtilisateurService {
         }
         utilisateurAActiver.get().setActif(true);
         utilisateurRepository.save(utilisateurAActiver.get());
+        validationRepository.delete(validation);
         return new ResponseEntity<>("cher " + utilisateurAActiver.get().getPrenom() + " votre compte a été activé .", HttpStatus.OK);
     }
 
@@ -100,5 +103,30 @@ public class UtilisateurService {
 //            throw new ApiSocialNetworkException("Token non trouve",HttpStatus.MULTI_STATUS);
         }
         return new ResponseEntity<>( "Déconnexion réussie", HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> modifierMotDePasse(Map<String, String> username) {
+        Optional<Utilisateur> utilisateur = utilisateurRepository.findByEmail(username.get("email"));
+        if (utilisateur.isEmpty()) {
+            throw new ApiSocialNetworkException("Utilisateur n'existe pas", HttpStatus.NOT_FOUND);
+        }
+        validationService.enregistrerValidationEtNotifier(utilisateur.get());
+        return new ResponseEntity<>("un code de verification vous a été envoyé par email", HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> nouveauMotDePasse(Map<String, String> parametres) {
+        Validation validation = validationService.getValidationByCode(parametres.get("code"));
+        if (Instant.now().isAfter(validation.getExpiration())) {
+            throw new ApiSocialNetworkException("Le code d'activation a expiré. Veuillez en demander un nouveau.", HttpStatus.GONE);
+        }
+        Optional<Utilisateur> utilisateurAModifierMotDePasse = utilisateurRepository.findById(validation.getUtilisateur().getId());
+        if (utilisateurAModifierMotDePasse.isEmpty()) {
+            throw new ApiSocialNetworkException("Utilisateur n'existe pas", HttpStatus.NOT_FOUND); //pas util ici pour l'utilisateur
+        }
+        utilisateurAModifierMotDePasse.get().setMotDePasse(passwordEncoder.encode(parametres.get("nouveauMotDePasse")));
+        utilisateurAModifierMotDePasse.get().setMotDePasseConfirmation(passwordEncoder.encode(parametres.get("confirmationMotDePasse")));
+        utilisateurRepository.save(utilisateurAModifierMotDePasse.get());
+        validationRepository.delete(validation);
+        return new ResponseEntity<>("cher " + utilisateurAModifierMotDePasse.get().getPrenom() + " votre mot de pass a été réinitialisé.", HttpStatus.OK);
     }
 }

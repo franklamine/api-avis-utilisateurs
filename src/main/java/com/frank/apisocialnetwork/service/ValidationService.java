@@ -20,7 +20,7 @@ public class ValidationService {
     private ValidationRepository validationRepository;
     private NotificationService notificationService;
 
-    public void enregistrerValidation(Utilisateur utilisateur) {
+    public void enregistrerValidationEtNotifier(Utilisateur utilisateur) {
         Validation validation = new Validation();
         validation.setUtilisateur(utilisateur);
         Instant creation = Instant.now();

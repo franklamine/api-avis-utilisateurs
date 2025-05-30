@@ -33,7 +33,9 @@ public class ConfigurationSecurity {
                                         "/utilisateurs/activation",
                                         "/utilisateurs/connexion",
                                         "/utilisateurs/refresh-token",
-                                        "/utilisateurs/deconnexion").permitAll()
+                                        "/utilisateurs/deconnexion",
+                                        "/utilisateurs/mot-de-passe-oublier",
+                                        "/utilisateurs/nouveau-mot-de-passe").permitAll()
                                 .anyRequest().authenticated())
                 .sessionManagement(httpSecuritySessionManagementConfigurer ->
                         httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

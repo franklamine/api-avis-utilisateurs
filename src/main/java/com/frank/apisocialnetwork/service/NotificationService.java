@@ -16,8 +16,8 @@ public class NotificationService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("no-reply@frank.tech");
         message.setTo(validation.getUtilisateur().getEmail());
-        message.setSubject("Code d'activation");
-        message.setText("Bonjour votre code d'activation est: " + validation.getCode());
+        message.setSubject("Code de vérification");
+        message.setText("Bonjour votre code de vérification est: " + validation.getCode());
 
         javaMailSender.send(message);
     }
