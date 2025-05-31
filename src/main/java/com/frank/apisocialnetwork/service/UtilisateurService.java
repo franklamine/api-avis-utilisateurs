@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -97,9 +98,11 @@ public class UtilisateurService {
     }
 
     public ResponseEntity<String> deconnexion(Map<String, String> refreshToken) {
-        Token token = tokenRepository.findByRefreshToken(refreshToken.get("token"));
-        if (token != null) {
-            tokenRepository.delete(token);
+        List<Token> tokens = tokenRepository.findByRefreshToken(refreshToken.get("token"));
+        if (!tokens.isEmpty()) {
+            for (Token s : tokens) {
+                tokenRepository.delete(s);
+            }
 //            throw new ApiSocialNetworkException("Token non trouve",HttpStatus.MULTI_STATUS);
         }
         return new ResponseEntity<>( "Déconnexion réussie", HttpStatus.OK);

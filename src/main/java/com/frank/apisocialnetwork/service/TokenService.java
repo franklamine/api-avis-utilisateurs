@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -72,19 +73,19 @@ public class TokenService {
 
     public Map<String, String> refreshToken(Map<String, String> refreshToken) {
         String valeurRefresh = refreshToken.get("token");
-        Token token = tokenRepository.findByRefreshToken(valeurRefresh);
-        if (token == null) {
+        List<Token> tokens = tokenRepository.findByRefreshToken(valeurRefresh);
+        if (tokens.isEmpty()) {
             throw new RuntimeException("Token non trouve");
         }
         if (isTokenExpired(valeurRefresh)) {
             throw new RuntimeException("le token a expiré");
         }
-        String accessToken = generateToken(token.getUtilisateur().getUsername(), true);
+        String accessToken = generateToken(tokens.get(0).getUtilisateur().getUsername(), true);
         Token tokenObj = new Token();
         tokenObj.setAccessToken(accessToken);
         tokenObj.setRefreshToken(valeurRefresh);
-        tokenObj.setUtilisateur(token.getUtilisateur());
-        tokenRepository.delete(token);
+        tokenObj.setUtilisateur(tokens.get(0).getUtilisateur());
+        tokenRepository.deleteAll(tokens);
         tokenRepository.save(tokenObj);
         return new HashMap<>(Map.of("accessToken",accessToken)) ;
     }
