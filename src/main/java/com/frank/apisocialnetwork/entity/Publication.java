@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,12 +21,13 @@ public class Publication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String message;
+    private int likes;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
     private byte[] photo;
 
-    @Lob
+    @Lob //il sagit des données binaires
     @Basic(fetch = FetchType.LAZY)//tu demandes à JPA de ne charger ce champ que lorsqu’on y accède explicitement.
     private byte[] video;
 
@@ -39,4 +41,10 @@ public class Publication {
 
     @ManyToOne
     private Utilisateur utilisateur;
+
+    @OneToMany(mappedBy = "publication")
+    private List<Comment> comments;
+
+
+
 }

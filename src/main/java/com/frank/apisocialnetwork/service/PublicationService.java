@@ -1,5 +1,6 @@
 package com.frank.apisocialnetwork.service;
 
+import com.frank.apisocialnetwork.dto.CommentDTO;
 import com.frank.apisocialnetwork.dto.PublicationDTO;
 import com.frank.apisocialnetwork.dto.UtilisateurDTO;
 import com.frank.apisocialnetwork.entity.Publication;
@@ -7,6 +8,7 @@ import com.frank.apisocialnetwork.entity.Utilisateur;
 import com.frank.apisocialnetwork.exception.ApiSocialNetworkException;
 import com.frank.apisocialnetwork.repository.PublicationRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
-
+@Slf4j
 @AllArgsConstructor
 @Service
 public class PublicationService {
@@ -30,9 +32,15 @@ public class PublicationService {
             publication.setMessage(message);
 
             if (photo != null && !photo.isEmpty()) {
+                if (!photo.getContentType().startsWith("image/")) {
+                    throw new ApiSocialNetworkException("Fichier image non valide", HttpStatus.BAD_REQUEST);
+                }
                 publication.setPhoto(photo.getBytes());
             }
             if (video != null && !video.isEmpty()) {
+                if (!video.getContentType().startsWith("video/")) {
+                    throw new ApiSocialNetworkException("Fichier vidéo non valide", HttpStatus.BAD_REQUEST);
+                }
                 publication.setVideo(video.getBytes());
             }
 
@@ -44,6 +52,7 @@ public class PublicationService {
     }
 
     public ResponseEntity<List<PublicationDTO>> getAllPublications() {
+
           List<PublicationDTO> publicationDTOS = publicationRepository.findAllByOrderByCreatedAtDesc().stream()
                   .map(publication -> {
                       String photoBase64 = publication.getPhoto() != null
@@ -54,14 +63,29 @@ public class PublicationService {
                               ? "data:video/mp4;base64," + Base64.getEncoder().encodeToString(publication.getVideo())
                               : null;
 
-                      Utilisateur utilisateur = publication.getUtilisateur();
-                      UtilisateurDTO utilisateurDTO = new UtilisateurDTO(utilisateur.getPrenom());
+                      Utilisateur utilisateurPub = publication.getUtilisateur();
+                      UtilisateurDTO utilisateurDTO = new UtilisateurDTO(utilisateurPub.getNom() , utilisateurPub.getPrenom());
+
+
+                      List<CommentDTO> commentDTOs = publication.getComments().stream()
+//                              .sorted((c1, c2) -> c2.getId().compareTo(c1.getId())) // tri du plus récent au plus ancien
+                              .map(comment -> new CommentDTO(
+                                      publication.getId(),
+                                      comment.getMessage(),
+                                      comment.getLikes(),
+                                      new UtilisateurDTO(comment.getUtilisateur().getNom(), comment.getUtilisateur().getPrenom())
+                              ))
+                              .collect(Collectors.toList());
 
                       return new PublicationDTO(
+                              publication.getId(),
                               publication.getMessage(),
                               photoBase64,
                               videoBase64,
-                              utilisateurDTO
+                              utilisateurDTO,
+                              commentDTOs,
+                              publication.getLikes(),
+                              publication.getCreatedAt()
                       );
                   }).collect(Collectors.toList());
 

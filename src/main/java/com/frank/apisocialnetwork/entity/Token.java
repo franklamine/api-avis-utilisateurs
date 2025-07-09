@@ -15,8 +15,14 @@ import lombok.Setter;
 public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
+
+    @Lob
+    @Column( columnDefinition = "TEXT")
     private String refreshToken;
+
+    @Lob
+    @Column( columnDefinition = "TEXT")
     private String AccessToken;
 
     @ManyToOne

@@ -29,9 +29,9 @@ public class TokenService {
 
     public String generateToken(String username, boolean isAccessToken) {
 
-        long expiration = isAccessToken ? calculExpiration(50) : calculExpiration(60);
+        long expiration = isAccessToken ? calculExpiration(1) : calculExpiration(60);
         Utilisateur utilisateur = (Utilisateur) customUserDetailsService.loadUserByUsername(username);
-        final Map<String, Object> claims = new HashMap<>(Map.of("nom", utilisateur.getNom(), "roles",utilisateur.getAuthorities()));
+        final Map<String, Object> claims = new HashMap<>(Map.of("nom", utilisateur.getNom(),"prenom" ,utilisateur.getPrenom(), "roles",utilisateur.getAuthorities()));
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -85,7 +85,7 @@ public class TokenService {
         tokenObj.setAccessToken(accessToken);
         tokenObj.setRefreshToken(valeurRefresh);
         tokenObj.setUtilisateur(tokens.get(0).getUtilisateur());
-        tokenRepository.deleteAll(tokens);
+        tokenRepository.deleteAll();
         tokenRepository.save(tokenObj);
         return new HashMap<>(Map.of("accessToken",accessToken)) ;
     }

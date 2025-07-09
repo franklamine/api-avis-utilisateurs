@@ -1,4 +1,7 @@
 package com.frank.apisocialnetwork.dto;
 
-public class CommentDTO {
+
+
+public record CommentDTO(int PublicationId, String message, int like, UtilisateurDTO utilisateur) {
 }
+
