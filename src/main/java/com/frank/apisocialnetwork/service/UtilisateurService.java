@@ -1,10 +1,9 @@
 package com.frank.apisocialnetwork.service;
 
 import com.frank.apisocialnetwork.dto.AuthentificationDTO;
-import com.frank.apisocialnetwork.entity.Role;
-import com.frank.apisocialnetwork.entity.Token;
-import com.frank.apisocialnetwork.entity.Utilisateur;
-import com.frank.apisocialnetwork.entity.Validation;
+import com.frank.apisocialnetwork.dto.ProfileDTO;
+import com.frank.apisocialnetwork.dto.UtilisateurDTO;
+import com.frank.apisocialnetwork.entity.*;
 import com.frank.apisocialnetwork.enumerateur.TypeRole;
 import com.frank.apisocialnetwork.exception.ApiSocialNetworkException;
 import com.frank.apisocialnetwork.repository.TokenRepository;
@@ -18,15 +17,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Transactional
 @AllArgsConstructor
@@ -52,6 +49,8 @@ public class UtilisateurService {
         utilisateur.setMotDePasseConfirmation(passwordEncoder.encode(utilisateur.getMotDePasseConfirmation()));
         utilisateur.setRole(new Role());
         utilisateur.getRole().setTypeRole(TypeRole.UTILISATEUR);
+        utilisateur.setProfile(new Profile());
+        utilisateur.getProfile().setUtilisateur(utilisateur);
         utilisateur = utilisateurRepository.save(utilisateur);
 
         validationService.enregistrerValidationEtNotifier(utilisateur);
@@ -131,5 +130,24 @@ public class UtilisateurService {
         utilisateurRepository.save(utilisateurAModifierMotDePasse.get());
         validationRepository.delete(validation);
         return new ResponseEntity<>("cher " + utilisateurAModifierMotDePasse.get().getPrenom() + " votre mot de pass a été réinitialisé.", HttpStatus.OK);
+    }
+
+    public ResponseEntity<UtilisateurDTO> getConnectedUser() {
+
+        Utilisateur principal = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Utilisateur utilisateur = utilisateurRepository
+                .findById(principal.getId())
+                .orElseThrow(() -> new ApiSocialNetworkException("Utilisateur non trouvé", HttpStatus.NOT_FOUND));
+
+        Profile profile = utilisateur.getProfile();
+        String photoProfileBase64 = profile.getPhotoProfile() != null ? "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(profile.getPhotoProfile()) : null;
+        String photoCouvertureBase64 = profile.getPhotoCouverture() != null ? "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(profile.getPhotoCouverture()) : null;
+
+        ProfileDTO profileDTO = new ProfileDTO(profile.getBio(),photoProfileBase64, photoCouvertureBase64);
+
+        UtilisateurDTO utilisateurDTO = new UtilisateurDTO(utilisateur.getNom(), utilisateur.getPrenom(), profileDTO);
+
+        return new ResponseEntity<>(utilisateurDTO, HttpStatus.OK);
     }
 }

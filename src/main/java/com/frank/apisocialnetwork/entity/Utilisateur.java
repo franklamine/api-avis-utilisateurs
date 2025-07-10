@@ -33,6 +33,9 @@ public class Utilisateur implements UserDetails {
     @OneToOne(cascade = CascadeType.ALL)
     private Role role;
 
+    @OneToOne(mappedBy = "utilisateur", cascade = CascadeType.ALL)
+    Profile profile;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_"+this.role.getTypeRole()));

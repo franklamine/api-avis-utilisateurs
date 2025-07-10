@@ -1,5 +1,6 @@
 package com.frank.apisocialnetwork.controller;
 
+import com.frank.apisocialnetwork.dto.UtilisateurDTO;
 import com.frank.apisocialnetwork.service.TokenService;
 import com.frank.apisocialnetwork.dto.AuthentificationDTO;
 import com.frank.apisocialnetwork.entity.Utilisateur;
@@ -56,5 +57,10 @@ public class UtilisateurController {
     @PostMapping("nouveau-mot-de-passe")
     public ResponseEntity<String> nouveauMotDePasse(@RequestBody Map<String, String> parametres) {
         return utilisateurService.nouveauMotDePasse(parametres);
+    }
+
+    @GetMapping(path = "connected")
+    public ResponseEntity<UtilisateurDTO> getConnectedUser() {
+        return utilisateurService.getConnectedUser();
     }
 }

@@ -9,7 +9,8 @@ public record PublicationDTO(
         String message,
         String photo, // en base64
         String video, // en base64
-        UtilisateurDTO utilisateur,
+        String auteurPublication,
+        String photoAuteurPublication,
         List<CommentDTO> comments,
         int likes,
         LocalDateTime date
