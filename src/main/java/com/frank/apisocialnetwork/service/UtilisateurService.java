@@ -2,6 +2,7 @@ package com.frank.apisocialnetwork.service;
 
 import com.frank.apisocialnetwork.dto.AuthentificationDTO;
 import com.frank.apisocialnetwork.dto.ProfileDTO;
+import com.frank.apisocialnetwork.dto.UserConnectedDTO;
 import com.frank.apisocialnetwork.dto.UtilisateurDTO;
 import com.frank.apisocialnetwork.entity.*;
 import com.frank.apisocialnetwork.enumerateur.TypeRole;
@@ -11,6 +12,7 @@ import com.frank.apisocialnetwork.repository.UtilisteurRepository;
 import com.frank.apisocialnetwork.repository.ValidationRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 @Transactional
 @AllArgsConstructor
 @Service
@@ -104,7 +107,7 @@ public class UtilisateurService {
             }
 //            throw new ApiSocialNetworkException("Token non trouve",HttpStatus.MULTI_STATUS);
         }
-        return new ResponseEntity<>( "Déconnexion réussie", HttpStatus.OK);
+        return new ResponseEntity<>("Déconnexion réussie", HttpStatus.OK);
     }
 
     public ResponseEntity<String> modifierMotDePasse(Map<String, String> username) {
@@ -132,22 +135,49 @@ public class UtilisateurService {
         return new ResponseEntity<>("cher " + utilisateurAModifierMotDePasse.get().getPrenom() + " votre mot de pass a été réinitialisé.", HttpStatus.OK);
     }
 
-    public ResponseEntity<UtilisateurDTO> getConnectedUser() {
 
-        Utilisateur principal = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<UserConnectedDTO> getConnectedUser() {
 
+        Utilisateur userConnected = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String photoProfileUserConnectedBase64 = userConnected.getProfile().getPhotoProfile() != null ? "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(userConnected.getProfile().getPhotoProfile()) : null;
+        String photoCouvertureUserConnectedBase64 = userConnected.getProfile().getPhotoCouverture() != null ? "data:image/jpeg;base64," + Base64.getEncoder().encodeToString( userConnected.getProfile().getPhotoCouverture()) : null;
+
+        UserConnectedDTO userConnectedDTO = new UserConnectedDTO(
+                userConnected.getId(),
+                userConnected.getNom(),
+                userConnected.getPrenom(),
+                photoProfileUserConnectedBase64,
+                photoCouvertureUserConnectedBase64
+        );
+
+        return new ResponseEntity<>(userConnectedDTO, HttpStatus.OK);
+
+    }
+
+
+    public ResponseEntity<UtilisateurDTO> getUserById(Integer id) {
+        log.info(id.toString());
         Utilisateur utilisateur = utilisateurRepository
-                .findById(principal.getId())
+                .findById(id)
                 .orElseThrow(() -> new ApiSocialNetworkException("Utilisateur non trouvé", HttpStatus.NOT_FOUND));
 
         Profile profile = utilisateur.getProfile();
         String photoProfileBase64 = profile.getPhotoProfile() != null ? "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(profile.getPhotoProfile()) : null;
         String photoCouvertureBase64 = profile.getPhotoCouverture() != null ? "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(profile.getPhotoCouverture()) : null;
 
-        ProfileDTO profileDTO = new ProfileDTO(profile.getBio(),photoProfileBase64, photoCouvertureBase64);
+        ProfileDTO profileDTO = new ProfileDTO(profile.getBio(), photoProfileBase64, photoCouvertureBase64);
 
-        UtilisateurDTO utilisateurDTO = new UtilisateurDTO(utilisateur.getNom(), utilisateur.getPrenom(), profileDTO);
+
+        UtilisateurDTO utilisateurDTO = new UtilisateurDTO(
+                utilisateur.getId(),
+                utilisateur.getNom(),
+                utilisateur.getPrenom(),
+                profileDTO
+        );
 
         return new ResponseEntity<>(utilisateurDTO, HttpStatus.OK);
     }
+
+
 }
+

@@ -1,5 +1,6 @@
 package com.frank.apisocialnetwork.controller;
 
+import com.frank.apisocialnetwork.dto.UserConnectedDTO;
 import com.frank.apisocialnetwork.dto.UtilisateurDTO;
 import com.frank.apisocialnetwork.service.TokenService;
 import com.frank.apisocialnetwork.dto.AuthentificationDTO;
@@ -60,7 +61,12 @@ public class UtilisateurController {
     }
 
     @GetMapping(path = "connected")
-    public ResponseEntity<UtilisateurDTO> getConnectedUser() {
+    public ResponseEntity<UserConnectedDTO> getConnectedUser() {
         return utilisateurService.getConnectedUser();
+    }
+
+    @GetMapping(path = "{id}")
+    public ResponseEntity<UtilisateurDTO> getUserById(@PathVariable Integer id) {
+        return utilisateurService.getUserById(id);
     }
 }
